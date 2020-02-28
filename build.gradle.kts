@@ -29,7 +29,7 @@ tasks {
   }
   jar {
     manifest {
-      attributes["Main-Class"] = "MainKt"
+      attributes["Main-Class"] = project.findProperty("mainClass") ?: "NULL"
     }
   }
 }
