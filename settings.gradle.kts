@@ -1,3 +1,4 @@
 rootProject.name = "DistributedLocalitySchedulingTechniques"
-include("generator")
+include("lib-broker")
+include("generator-round-robin")
 include("consumer-round-robin")
