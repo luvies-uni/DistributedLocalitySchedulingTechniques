@@ -1,5 +1,6 @@
 plugins {
-  kotlin("jvm") version "1.3.61"
+  kotlin("jvm")
+  kotlin("plugin.serialization")
 }
 
 dependencies {
@@ -8,6 +9,7 @@ dependencies {
 
   api("org.apache.activemq", "activemq-core", "5.7.0")
   implementation("org.slf4j", "slf4j-simple", "1.7.30")
+  implementation("org.jetbrains.kotlinx", "kotlinx-serialization-runtime", "0.14.0")
 }
 
 tasks {

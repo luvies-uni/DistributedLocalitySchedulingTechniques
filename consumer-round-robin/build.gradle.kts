@@ -1,5 +1,6 @@
 plugins {
-  kotlin("jvm") version "1.3.61"
+  application
+  kotlin("jvm")
 }
 
 dependencies {
@@ -9,6 +10,10 @@ dependencies {
   implementation(project(":lib-job"))
 }
 
+application {
+  mainClassName = "job.consumer.roundRobin.MainKt"
+}
+
 tasks {
   compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
@@ -16,10 +21,5 @@ tasks {
   }
   compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
-  }
-  jar {
-    manifest {
-      attributes["Main-Class"] = "job.consumer.roundRobin.MainKt"
-    }
   }
 }
