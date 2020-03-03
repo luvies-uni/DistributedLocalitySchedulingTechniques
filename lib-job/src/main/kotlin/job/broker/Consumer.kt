@@ -1,7 +1,10 @@
 package job.broker
 
+import job.data.RepositoryJob
 import org.slf4j.LoggerFactory
 import javax.jms.*
+
+typealias MessageHandler = (job: RepositoryJob, queue: String) -> Unit
 
 class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable, ExceptionListener {
   private val logger = LoggerFactory.getLogger(this.javaClass)
@@ -12,22 +15,32 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
     connection.exceptionListener = this
   }
 
-  fun receive(queue: String, timeout: Long? = null) {
+  fun receive(queue: String, timeout: Long? = null): RepositoryJob? {
     val consumer = createConsumer(queue)
 
     val message = when (timeout) {
       null -> consumer.receive()
       else -> consumer.receive(timeout)
+    } as TextMessage
+
+    val job = when (message) {
+      !is TextMessage -> null
+      else -> RepositoryJob.parse(message.text)
     }
 
-    handleMessage(queue, message)
+    when (job) {
+      null -> logger.warn("Received null message from {}", queue)
+      else -> logger.info("Received {} from {}", job, queue)
+    }
 
     consumer.close()
+
+    return job
   }
 
-  fun startListen(queue: String): Boolean {
+  fun startListen(queue: String, handler: MessageHandler): Boolean {
     return if (!consumers.containsKey(queue)) {
-      consumers[queue] = Listener(queue)
+      consumers[queue] = Listener(queue, handler)
       true
     } else {
       false
@@ -42,15 +55,6 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
       true
     } else {
       false
-    }
-  }
-
-  private fun handleMessage(queue: String, message: Message?) {
-    if (message is TextMessage) {
-      val text: String = message.text
-      logger.info("Received: $text from $queue")
-    } else {
-      logger.info("Received: $message from $queue")
     }
   }
 
@@ -75,7 +79,8 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
     logger.error("JMS exception occurred", exception)
   }
 
-  inner class Listener(private val queue: String) : AutoCloseable, MessageListener {
+  inner class Listener(private val queue: String, private val handler: MessageHandler) : AutoCloseable,
+    MessageListener {
     private val consumer: MessageConsumer = createConsumer(queue)
 
     init {
@@ -84,7 +89,16 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
     }
 
     override fun onMessage(message: Message?) {
-      handleMessage(queue, message)
+      when (message) {
+        null -> logger.warn("Received null message from {}", queue)
+        !is TextMessage -> logger.warn("Received non-TextMessage from {}", queue)
+        else -> {
+          val job = RepositoryJob.parse(message.text)
+          logger.info("Received {} from {}", job, queue)
+          handler(job, queue)
+        }
+
+      }
     }
 
     override fun close() {

@@ -1,12 +1,13 @@
 package job.broker
 
+import job.data.RepositoryJob
 import org.slf4j.LoggerFactory
 import javax.jms.DeliveryMode
 
 class Producer(brokerUri: String) : ActiveMQConnection(brokerUri) {
   private val logger = LoggerFactory.getLogger(this.javaClass)
 
-  fun send(queue: String, content: String) {
+  fun send(queue: String, job: RepositoryJob) {
     // Create the destination (Topic or Queue)
     val destination = session.createQueue(queue)
 
@@ -14,11 +15,11 @@ class Producer(brokerUri: String) : ActiveMQConnection(brokerUri) {
     val producer = session.createProducer(destination)
     producer.deliveryMode = DeliveryMode.NON_PERSISTENT
 
-    val message = session.createTextMessage(content)
+    val message = session.createTextMessage(job.stringify())
     producer.send(message)
 
     producer.close()
 
-    logger.info("Sent message to $queue")
+    logger.info("Sent {} to {}", job, queue)
   }
 }
