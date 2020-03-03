@@ -6,7 +6,7 @@ dependencies {
   implementation(kotlin("stdlib-jdk8"))
   testImplementation("junit", "junit", "4.12")
 
-  implementation(project(":lib-broker"))
+  implementation(project(":lib-job"))
 }
 
 tasks {
