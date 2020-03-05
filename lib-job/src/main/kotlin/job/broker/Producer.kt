@@ -13,13 +13,16 @@ class Producer(brokerUri: String) : ActiveMQConnection(brokerUri) {
 
     // Create a MessageProducer from the Session to the Topic or Queue
     val producer = session.createProducer(destination)
-    producer.deliveryMode = DeliveryMode.NON_PERSISTENT
 
-    val message = session.createTextMessage(job.stringify())
-    producer.send(message)
+    try {
+      producer.deliveryMode = DeliveryMode.NON_PERSISTENT
 
-    producer.close()
+      val message = session.createTextMessage(job.stringify())
+      producer.send(message)
 
-    logger.info("Sent {} to {}", job, queue)
+      logger.info("Sent {} to {}", job, queue)
+    } finally {
+      producer.close()
+    }
   }
 }

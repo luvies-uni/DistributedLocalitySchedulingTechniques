@@ -1,6 +1,7 @@
 package job.broker
 
 import org.apache.activemq.ActiveMQConnectionFactory
+import org.apache.activemq.ActiveMQSession
 import javax.jms.Connection
 import javax.jms.Session
 
@@ -18,7 +19,7 @@ open class ActiveMQConnection(brokerUri: String) : AutoCloseable {
     connection.start()
 
     // Create a Session
-    session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
+    session = connection.createSession(false, ActiveMQSession.INDIVIDUAL_ACKNOWLEDGE)
   }
 
   override fun close() {

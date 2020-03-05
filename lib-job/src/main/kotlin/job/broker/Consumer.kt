@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import javax.jms.*
 
 typealias MessageHandler = (job: RepositoryJob, queue: String) -> Unit
+typealias MessagePredicate = (job: RepositoryJob) -> Boolean
 
 class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable, ExceptionListener {
   private val logger = LoggerFactory.getLogger(this.javaClass)
@@ -15,32 +16,24 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
     connection.exceptionListener = this
   }
 
-  fun receive(queue: String, timeout: Long? = null): RepositoryJob? {
+  fun receive(queue: String, msgPredicate: MessagePredicate? = null, timeout: Long? = null): RepositoryJob? {
     val consumer = createConsumer(queue)
 
-    val message = when (timeout) {
-      null -> consumer.receive()
-      else -> consumer.receive(timeout)
-    } as TextMessage
+    try {
+      val message: Message? = when (timeout) {
+        null -> consumer.receive()
+        else -> consumer.receive(timeout)
+      }
 
-    val job = when (message) {
-      !is TextMessage -> null
-      else -> RepositoryJob.parse(message.text)
+      return handleMessage(queue, message, msgPredicate)
+    } finally {
+      consumer.close()
     }
-
-    when (job) {
-      null -> logger.warn("Received null message from {}", queue)
-      else -> logger.info("Received {} from {}", job, queue)
-    }
-
-    consumer.close()
-
-    return job
   }
 
-  fun startListen(queue: String, handler: MessageHandler): Boolean {
+  fun startListen(queue: String, handler: MessageHandler, msgPredicate: MessagePredicate? = null): Boolean {
     return if (!consumers.containsKey(queue)) {
-      consumers[queue] = Listener(queue, handler)
+      consumers[queue] = Listener(queue, handler, msgPredicate)
       true
     } else {
       false
@@ -66,6 +59,31 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
     return session.createConsumer(destination)
   }
 
+  private fun handleMessage(queue: String, message: Message?, msgPredicate: MessagePredicate?): RepositoryJob? {
+    return when (message) {
+      null -> {
+        logger.debug("Received null message for {}", queue)
+        null
+      }
+      !is TextMessage -> {
+        logger.warn("Received non-TextMessage from {}", queue)
+        null
+      }
+      else -> {
+        val job = RepositoryJob.parse(message.text)
+
+        if (msgPredicate?.invoke(job) != false) {
+          message.acknowledge()
+          logger.info("Received {} from {} (acknowledged)", job, queue)
+          job
+        } else {
+          logger.info("Received {} from {} (ignored)", job, queue)
+          null
+        }
+      }
+    }
+  }
+
   override fun close() {
     for ((_, consumer) in consumers) {
       consumer.close()
@@ -79,9 +97,12 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
     logger.error("JMS exception occurred", exception)
   }
 
-  inner class Listener(private val queue: String, private val handler: MessageHandler) : AutoCloseable,
-    MessageListener {
-    private val consumer: MessageConsumer = createConsumer(queue)
+  inner class Listener(
+    private val queue: String,
+    private val handler: MessageHandler,
+    private val msgPredicate: MessagePredicate?
+  ) : AutoCloseable, MessageListener {
+    private var consumer: MessageConsumer = createConsumer(queue)
 
     init {
       consumer.messageListener = this
@@ -89,15 +110,14 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
     }
 
     override fun onMessage(message: Message?) {
-      when (message) {
-        null -> logger.warn("Received null message from {}", queue)
-        !is TextMessage -> logger.warn("Received non-TextMessage from {}", queue)
-        else -> {
-          val job = RepositoryJob.parse(message.text)
-          logger.info("Received {} from {}", job, queue)
-          handler(job, queue)
-        }
-
+      val job = handleMessage(queue, message, msgPredicate)
+      if (job != null) {
+        handler(job, queue)
+      } else {
+        // Close the connection to force rejection of the message.
+        consumer.close()
+        consumer = createConsumer(queue)
+        consumer.messageListener = this
       }
     }
 

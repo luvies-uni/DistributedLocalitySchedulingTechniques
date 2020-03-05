@@ -1,7 +1,8 @@
 package job.data
 
-import kotlinx.serialization.*
-import kotlinx.serialization.json.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
 
 @Serializable
 data class RepositoryJob(val repository: String, val task: String) {
@@ -11,7 +12,7 @@ data class RepositoryJob(val repository: String, val task: String) {
 
   companion object {
     @JvmStatic
-    val json = Json(JsonConfiguration.Default)
+    val json = Json(JsonConfiguration.Stable)
 
     @JvmStatic
     fun parse(str: String): RepositoryJob {
