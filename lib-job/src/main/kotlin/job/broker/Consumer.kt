@@ -16,18 +16,14 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
     connection.exceptionListener = this
   }
 
-  fun receive(queue: String, msgPredicate: MessagePredicate? = null, timeout: Long? = null): RepositoryJob? {
-    val consumer = createConsumer(queue)
-
-    try {
+  fun receive(queue: String, timeout: Long? = null, msgPredicate: MessagePredicate? = null): RepositoryJob? {
+    return createConsumer(queue).use { consumer ->
       val message: Message? = when (timeout) {
         null -> consumer.receive()
         else -> consumer.receive(timeout)
       }
 
-      return handleMessage(queue, message, msgPredicate)
-    } finally {
-      consumer.close()
+      handleMessage(queue, message, msgPredicate)
     }
   }
 
@@ -41,22 +37,19 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
   }
 
   fun stopListen(queue: String): Boolean {
-    val consumer = consumers[queue]
-    return if (consumer != null) {
-      consumer.close()
+    return consumers[queue]?.let {
+      it.close()
       consumers.remove(queue)
       true
-    } else {
-      false
-    }
+    } ?: false
   }
 
-  private fun createConsumer(queue: String): MessageConsumer {
+  private fun createConsumer(queue: String): JmsConsumer {
     // Create the destination (Topic or Queue)
     val destination = session.createQueue(queue)
 
     // Create a MessageConsumer from the Session to the Topic or Queue
-    return session.createConsumer(destination)
+    return JmsConsumer(session.createConsumer(destination))
   }
 
   private fun handleMessage(queue: String, message: Message?, msgPredicate: MessagePredicate?): RepositoryJob? {
@@ -72,7 +65,7 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
       else -> {
         val job = RepositoryJob.parse(message.text)
 
-        if (msgPredicate?.invoke(job) != false) {
+        if (msgPredicate == null || msgPredicate(job)) {
           message.acknowledge()
           logger.info("Received {} from {} (acknowledged)", job, queue)
           job
@@ -102,7 +95,7 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
     private val handler: MessageHandler,
     private val msgPredicate: MessagePredicate?
   ) : AutoCloseable, MessageListener {
-    private var consumer: MessageConsumer = createConsumer(queue)
+    private var consumer = createConsumer(queue)
 
     init {
       consumer.messageListener = this
@@ -127,3 +120,5 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
     }
   }
 }
+
+private class JmsConsumer(c: MessageConsumer) : MessageConsumer by c, AutoCloseable
