@@ -9,16 +9,16 @@ fun main() {
   shutdownWrapper { sig ->
     Producer("tcp://localhost:61616").use { producer ->
       val generator = Generator(10)
-      while (sig.run) {
+      val totalJobs = 10
+      producer.startTiming(totalJobs)
+
+      var doneJobs = 0
+      while (sig.run && doneJobs < totalJobs) {
         producer.send("jobs/generic", generator.nextJob())
+        doneJobs++
 
         // Allow process to close during wait time.
-        for (i in 1..10) {
-          sleep(1000)
-          if (!sig.run) {
-            break
-          }
-        }
+        sleep(1000)
       }
     }
   }

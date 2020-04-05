@@ -5,9 +5,12 @@ import org.apache.activemq.ActiveMQSession
 import javax.jms.Connection
 import javax.jms.Session
 
+const val timingStartQueueName = "_timing/start"
+const val timingCountQueueName = "_timing/count"
+
 open class ActiveMQConnection(brokerUri: String) : AutoCloseable {
   protected val connection: Connection
-  protected val session: Session
+  val session: Session
 
   init {
     // Create a ConnectionFactory

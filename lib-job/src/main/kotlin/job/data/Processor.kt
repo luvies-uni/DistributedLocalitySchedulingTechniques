@@ -1,14 +1,18 @@
 package job.data
 
+import job.broker.ActiveMQConnection
+import job.broker.JmsProducer
+import job.broker.timingCountQueueName
 import org.slf4j.LoggerFactory
 import java.lang.System.currentTimeMillis
 import java.lang.Thread.sleep
 
 class Processor(
+  brokerUri: String,
   private val downloadTime: Long,
   private val processTime: Long,
   private val cacheTime: Long
-) {
+) : ActiveMQConnection(brokerUri) {
   private val logger = LoggerFactory.getLogger(this.javaClass)
 
   private val cache = mutableMapOf<String, Long>()
@@ -36,6 +40,20 @@ class Processor(
     // Simulate process.
     sleep(processTime)
     logger.info("Processed task {} in {}ms", job.task, processTime)
+
+    // Count the job as done.
+    countJob()
+  }
+
+  private fun countJob() {
+    val destination = session.createQueue(timingCountQueueName)
+
+    JmsProducer(session.createProducer(destination)).use { producer ->
+      val message = session.createTextMessage("1")
+      producer.send(message)
+
+      logger.info("Counted 1 job")
+    }
   }
 
   fun isRepositoryCached(repo: String): Boolean = repo in cache

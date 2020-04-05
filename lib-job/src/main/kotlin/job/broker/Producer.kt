@@ -8,6 +8,17 @@ import javax.jms.MessageProducer
 class Producer(brokerUri: String) : ActiveMQConnection(brokerUri) {
   private val logger = LoggerFactory.getLogger(this.javaClass)
 
+  fun startTiming(jobQuantity: Int) {
+    val destination = session.createQueue(timingStartQueueName)
+
+    JmsProducer(session.createProducer(destination)).use { producer ->
+      val message = session.createTextMessage(jobQuantity.toString())
+      producer.send(message)
+
+      logger.info("Started timing with {} items", jobQuantity)
+    }
+  }
+
   fun send(queue: String, job: RepositoryJob) {
     // Create the destination (Topic or Queue)
     val destination = session.createQueue(queue)
@@ -24,4 +35,4 @@ class Producer(brokerUri: String) : ActiveMQConnection(brokerUri) {
   }
 }
 
-private class JmsProducer(p: MessageProducer) : MessageProducer by p, AutoCloseable
+internal class JmsProducer(p: MessageProducer) : MessageProducer by p, AutoCloseable

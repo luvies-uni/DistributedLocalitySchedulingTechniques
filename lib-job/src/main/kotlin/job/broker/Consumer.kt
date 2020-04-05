@@ -45,11 +45,7 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
   }
 
   private fun createConsumer(queue: String): JmsConsumer {
-    // Create the destination (Topic or Queue)
-    val destination = session.createQueue(queue)
-
-    // Create a MessageConsumer from the Session to the Topic or Queue
-    return JmsConsumer(session.createConsumer(destination))
+    return JmsConsumer.create(this, queue)
   }
 
   private fun handleMessage(queue: String, message: Message?, msgPredicate: MessagePredicate?): RepositoryJob? {
@@ -121,4 +117,15 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
   }
 }
 
-private class JmsConsumer(c: MessageConsumer) : MessageConsumer by c, AutoCloseable
+class JmsConsumer(c: MessageConsumer) : MessageConsumer by c, AutoCloseable {
+  companion object {
+    @JvmStatic
+    fun create(conn: ActiveMQConnection, queue: String): JmsConsumer {
+      // Create the destination (Topic or Queue)
+      val destination = conn.session.createQueue(queue)
+
+      // Create a MessageConsumer from the Session to the Topic or Queue
+      return JmsConsumer(conn.session.createConsumer(destination))
+    }
+  }
+}
