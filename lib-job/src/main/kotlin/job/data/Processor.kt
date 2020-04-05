@@ -13,7 +13,7 @@ class Processor(
   private val processTime: Long,
   private val cacheTime: Long
 ) : ActiveMQConnection(brokerUri) {
-  private val logger = LoggerFactory.getLogger(this.javaClass)
+  private val logger = LoggerFactory.getLogger(javaClass)
 
   private val cache = mutableMapOf<String, Long>()
 

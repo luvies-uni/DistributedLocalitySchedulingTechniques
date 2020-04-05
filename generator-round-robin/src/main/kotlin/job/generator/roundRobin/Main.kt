@@ -1,25 +1,29 @@
 package job.generator.roundRobin
 
 import job.broker.Producer
+import job.broker.Signal
 import job.broker.shutdownWrapper
 import job.data.Generator
 import java.lang.Thread.sleep
 
 fun main() {
   shutdownWrapper { sig ->
-    Producer("tcp://localhost:61616").use { producer ->
-      val generator = Generator(10)
-      val totalJobs = 10
-      producer.startTiming(totalJobs)
+    runGenerator(sig, "tcp://localhost:61616", 10, 10, 1000)
+  }
+}
 
-      var doneJobs = 0
-      while (sig.run && doneJobs < totalJobs) {
-        producer.send("jobs/generic", generator.nextJob())
-        doneJobs++
+fun runGenerator(sig: Signal, brokerUri: String, repoCount: Int, totalJobs: Int, produceDelay: Long) {
+  Producer(brokerUri).use { producer ->
+    val generator = Generator(repoCount)
+    producer.startTiming(totalJobs)
 
-        // Allow process to close during wait time.
-        sleep(1000)
-      }
+    var doneJobs = 0
+    while (sig.run && doneJobs < totalJobs) {
+      producer.send("jobs/generic", generator.nextJob())
+      doneJobs++
+
+      // Allow process to close during wait time.
+      sleep(produceDelay)
     }
   }
 }

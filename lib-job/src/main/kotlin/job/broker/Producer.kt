@@ -6,7 +6,7 @@ import javax.jms.DeliveryMode
 import javax.jms.MessageProducer
 
 class Producer(brokerUri: String) : ActiveMQConnection(brokerUri) {
-  private val logger = LoggerFactory.getLogger(this.javaClass)
+  private val logger = LoggerFactory.getLogger(javaClass)
 
   fun startTiming(jobQuantity: Int) {
     val destination = session.createQueue(timingStartQueueName)
