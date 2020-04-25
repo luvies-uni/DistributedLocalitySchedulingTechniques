@@ -23,6 +23,7 @@ fun shutdownWrapper(fn: (signal: Signal) -> Unit) {
 
   if (signal.run) {
     Runtime.getRuntime().removeShutdownHook(shutdownThread)
+    signal.run = false
   }
 }
 

@@ -82,7 +82,7 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
     super.close()
   }
 
-  override fun onException(exception: JMSException?) {
+  override fun onException(exception: JMSException) {
     logger.error("JMS exception occurred", exception)
   }
 

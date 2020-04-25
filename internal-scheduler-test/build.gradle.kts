@@ -1,4 +1,5 @@
 plugins {
+  application
   kotlin("jvm")
 }
 
@@ -9,6 +10,10 @@ dependencies {
   implementation(project(":lib-job"))
   implementation(project(":consumer-round-robin"))
   implementation(project(":generator-round-robin"))
+}
+
+application {
+  mainClassName = "job.internalScheduler.MainKt"
 }
 
 tasks {
