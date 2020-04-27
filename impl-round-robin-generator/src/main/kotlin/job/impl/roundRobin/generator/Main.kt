@@ -1,4 +1,4 @@
-package job.generator.roundRobin
+package job.impl.roundRobin.generator
 
 import job.broker.Producer
 import job.broker.Signal

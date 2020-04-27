@@ -1,4 +1,4 @@
-package job.consumer.roundRobin
+package job.impl.roundRobin.consumer
 
 import job.broker.Consumer
 import job.broker.Signal

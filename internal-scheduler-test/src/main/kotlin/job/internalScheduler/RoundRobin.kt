@@ -2,8 +2,8 @@ package job.internalScheduler
 
 import job.broker.Timer
 import job.broker.shutdownWrapper
-import job.consumer.roundRobin.runConsumer
-import job.generator.roundRobin.runGenerator
+import job.impl.roundRobin.consumer.runConsumer
+import job.impl.roundRobin.generator.runGenerator
 import kotlin.concurrent.thread
 
 fun roundRobin() {

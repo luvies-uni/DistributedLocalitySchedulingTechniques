@@ -1,6 +1,6 @@
 package job.data
 
-import job.broker.ActiveMQConnection
+import job.broker.ActiveMQConn
 import job.broker.JmsProducer
 import job.broker.timingCountQueueName
 import org.slf4j.LoggerFactory
@@ -12,7 +12,7 @@ class Processor(
   private val downloadTime: Long,
   private val processTime: Long,
   private val cacheTime: Long
-) : ActiveMQConnection(brokerUri) {
+) : ActiveMQConn(brokerUri) {
   private val logger = LoggerFactory.getLogger(javaClass)
 
   private val cache = mutableMapOf<String, Long>()

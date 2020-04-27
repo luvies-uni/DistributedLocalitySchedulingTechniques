@@ -7,7 +7,7 @@ import javax.jms.*
 typealias MessageHandler = (job: RepositoryJob, queue: String) -> Unit
 typealias MessagePredicate = (job: RepositoryJob) -> Boolean
 
-class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable, ExceptionListener {
+class Consumer(brokerUri: String) : ActiveMQConn(brokerUri), AutoCloseable, ExceptionListener {
   private val logger = LoggerFactory.getLogger(javaClass)
 
   private val consumers = mutableMapOf<String, Listener>()
@@ -120,7 +120,7 @@ class Consumer(brokerUri: String) : ActiveMQConnection(brokerUri), AutoCloseable
 internal class JmsConsumer(c: MessageConsumer) : MessageConsumer by c, AutoCloseable {
   companion object {
     @JvmStatic
-    fun create(conn: ActiveMQConnection, queue: String): JmsConsumer {
+    fun create(conn: ActiveMQConn, queue: String): JmsConsumer {
       // Create the destination (Topic or Queue)
       val destination = conn.session.createQueue(queue)
 

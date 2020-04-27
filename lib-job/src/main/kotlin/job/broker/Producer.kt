@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 import javax.jms.DeliveryMode
 import javax.jms.MessageProducer
 
-class Producer(brokerUri: String) : ActiveMQConnection(brokerUri) {
+class Producer(brokerUri: String) : ActiveMQConn(brokerUri) {
   private val logger = LoggerFactory.getLogger(javaClass)
 
   fun startTiming(jobQuantity: Int) {

@@ -11,7 +11,7 @@ dependencies {
 }
 
 application {
-  mainClassName = "job.generator.MainKt"
+  mainClassName = "job.impl.roundRobin.generator.MainKt"
 }
 
 tasks {

@@ -5,7 +5,7 @@ import javax.jms.Message
 import javax.jms.TextMessage
 import kotlin.system.measureTimeMillis
 
-class Timer(brokerUri: String) : ActiveMQConnection(brokerUri) {
+class Timer(brokerUri: String) : ActiveMQConn(brokerUri) {
   private val logger = LoggerFactory.getLogger(javaClass)
 
   fun timeJobs(sig: Signal): Long {

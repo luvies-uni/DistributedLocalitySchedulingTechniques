@@ -11,7 +11,7 @@ dependencies {
 }
 
 application {
-  mainClassName = "job.consumer.roundRobin.MainKt"
+  mainClassName = "job.impl.roundRobin.consumer.MainKt"
 }
 
 tasks {
