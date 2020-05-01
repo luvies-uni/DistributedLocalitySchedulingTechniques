@@ -8,12 +8,13 @@ import java.lang.System.currentTimeMillis
 import java.lang.Thread.sleep
 
 class Processor(
-  brokerUri: String,
-  private val downloadTime: Long,
-  private val processTime: Long,
-  private val cacheTime: Long
-) : ActiveMQConn(brokerUri) {
+  config: ProcessorConfig
+) : ActiveMQConn(config.brokerUri) {
   private val logger = LoggerFactory.getLogger(javaClass)
+
+  private val downloadTime = config.downloadTime
+  private val processTime = config.processTime
+  private val cacheTime = config.cacheTime
 
   private val cache = mutableMapOf<String, Long>()
 
@@ -58,3 +59,10 @@ class Processor(
 
   fun isRepositoryCached(repo: String): Boolean = repo in cache
 }
+
+data class ProcessorConfig(
+  val brokerUri: String,
+  val downloadTime: Long,
+  val processTime: Long,
+  val cacheTime: Long
+)

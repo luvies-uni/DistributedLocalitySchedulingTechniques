@@ -23,6 +23,8 @@ fun shutdownWrapper(fn: (signal: Signal) -> Unit) {
 
   if (signal.run) {
     Runtime.getRuntime().removeShutdownHook(shutdownThread)
+
+    // This allows us to use the signal to control background threads
     signal.run = false
   }
 }

@@ -2,6 +2,7 @@ package job.internalScheduler
 
 import job.broker.Timer
 import job.broker.shutdownWrapper
+import job.data.ProcessorConfig
 import job.impl.roundRobin.consumer.runConsumer
 import job.impl.roundRobin.generator.runGenerator
 import kotlin.concurrent.thread
@@ -17,9 +18,10 @@ fun roundRobin() {
 
     println("Started timer thread")
 
+    val processorConfig = ProcessorConfig(brokerUri, 5000, 1000, 60000)
     val consumerThreads = (1..10).map {
       thread(name = "Consumer Thread $it") {
-        runConsumer(sig, brokerUri, 5000, 1000, 60000)
+        runConsumer(sig, processorConfig)
       }
     }
 
