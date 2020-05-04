@@ -1,6 +1,5 @@
 package job.metrics
 
-import job.broker.Timer
 import job.broker.shutdownWrapper
 
 fun main() {
