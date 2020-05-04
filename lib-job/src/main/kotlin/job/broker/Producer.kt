@@ -1,6 +1,7 @@
 package job.broker
 
 import job.data.RepositoryJob
+import job.metrics.queues.TimingQueues
 import org.slf4j.LoggerFactory
 import javax.jms.DeliveryMode
 import javax.jms.MessageProducer
@@ -9,7 +10,7 @@ class Producer(brokerUri: String) : ActiveMQConn(brokerUri) {
   private val logger = LoggerFactory.getLogger(javaClass)
 
   fun startTiming(jobQuantity: Int) {
-    val destination = session.createQueue(timingStartQueueName)
+    val destination = session.createQueue(TimingQueues.start)
 
     JmsProducer(session.createProducer(destination)).use { producer ->
       val message = session.createTextMessage(jobQuantity.toString())
@@ -35,4 +36,4 @@ class Producer(brokerUri: String) : ActiveMQConn(brokerUri) {
   }
 }
 
-internal class JmsProducer(p: MessageProducer) : MessageProducer by p, AutoCloseable
+class JmsProducer(p: MessageProducer) : MessageProducer by p, AutoCloseable

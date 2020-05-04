@@ -8,6 +8,7 @@ dependencies {
   testImplementation("junit", "junit", "4.12")
 
   implementation(project(":lib-job"))
+  implementation(project(":job-metrics"))
   implementation(project(":impl-round-robin-consumer"))
   implementation(project(":impl-round-robin-generator"))
 }

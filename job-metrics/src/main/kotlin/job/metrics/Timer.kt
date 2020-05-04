@@ -1,5 +1,9 @@
-package job.broker
+package job.metrics
 
+import job.broker.ActiveMQConn
+import job.broker.JmsConsumer
+import job.metrics.queues.TimingQueues
+import job.util.Signal
 import org.slf4j.LoggerFactory
 import javax.jms.Message
 import javax.jms.TextMessage
@@ -11,11 +15,11 @@ class Timer(brokerUri: String) : ActiveMQConn(brokerUri) {
   fun timeJobs(sig: Signal): Long {
     logger.info("Waiting for starting signal")
 
-    val totalJobs = createConsumer(timingStartQueueName).use { receive(it, sig) } ?: return -1
+    val totalJobs = createConsumer(TimingQueues.start).use { receive(it, sig) } ?: return -1
     logger.info("Started timing with {} jobs", totalJobs)
     var currentJobs = 0
 
-    val jobProcessTime = createConsumer(timingCountQueueName).use { consumer ->
+    val jobProcessTime = createConsumer(TimingQueues.count).use { consumer ->
       measureTimeMillis {
         while (currentJobs < totalJobs) {
           currentJobs += receive(consumer, sig) ?: return@measureTimeMillis

@@ -117,7 +117,7 @@ class Consumer(brokerUri: String) : ActiveMQConn(brokerUri), AutoCloseable, Exce
   }
 }
 
-internal class JmsConsumer(c: MessageConsumer) : MessageConsumer by c, AutoCloseable {
+class JmsConsumer(c: MessageConsumer) : MessageConsumer by c, AutoCloseable {
   companion object {
     @JvmStatic
     fun create(conn: ActiveMQConn, queue: String): JmsConsumer {

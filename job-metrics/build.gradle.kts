@@ -11,7 +11,7 @@ dependencies {
 }
 
 application {
-  mainClassName = "job.timer.MainKt"
+  mainClassName = "job.metrics.MainKt"
 }
 
 tasks {

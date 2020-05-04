@@ -2,7 +2,7 @@ package job.data
 
 import job.broker.ActiveMQConn
 import job.broker.JmsProducer
-import job.broker.timingCountQueueName
+import job.metrics.queues.TimingQueues
 import org.slf4j.LoggerFactory
 import java.lang.System.currentTimeMillis
 import java.lang.Thread.sleep
@@ -47,7 +47,7 @@ class Processor(
   }
 
   private fun countJob() {
-    val destination = session.createQueue(timingCountQueueName)
+    val destination = session.createQueue(TimingQueues.count)
 
     JmsProducer(session.createProducer(destination)).use { producer ->
       val message = session.createTextMessage("1")
