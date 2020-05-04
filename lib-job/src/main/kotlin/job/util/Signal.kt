@@ -38,14 +38,14 @@ class Signal(@Volatile private var _run: Boolean = true) {
     }
   }
 
-  internal fun exit() {
+  fun exit() {
     synchronized(monitor) {
       _run = false
       monitor.notifyAll()
     }
   }
 
-  internal fun start() {
+  fun start() {
     _run = true
   }
 }

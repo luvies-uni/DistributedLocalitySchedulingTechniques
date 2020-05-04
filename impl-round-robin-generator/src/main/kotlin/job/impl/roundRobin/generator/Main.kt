@@ -1,6 +1,6 @@
 package job.impl.roundRobin.generator
 
-import job.broker.Producer
+import job.broker.JobProducer
 import job.broker.shutdownWrapper
 import job.data.Generator
 import job.util.Signal
@@ -13,13 +13,13 @@ fun main() {
 }
 
 fun runGenerator(sig: Signal, brokerUri: String, repoCount: Int, totalJobs: Int, produceDelay: Long) {
-  Producer(brokerUri).use { producer ->
+  JobProducer(brokerUri).use { producer ->
     val generator = Generator(repoCount)
     producer.startTiming(totalJobs)
 
     var doneJobs = 0
     while (sig.run && doneJobs < totalJobs) {
-      producer.send("jobs/generic", generator.nextJob())
+      producer.sendJob("jobs/generic", generator.nextJob())
       doneJobs++
 
       // Allow process to close during wait time.

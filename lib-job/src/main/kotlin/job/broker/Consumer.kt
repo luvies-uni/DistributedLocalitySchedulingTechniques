@@ -1,38 +1,44 @@
 package job.broker
 
-import job.data.RepositoryJob
 import org.slf4j.LoggerFactory
 import javax.jms.*
 
-typealias MessageHandler = (job: RepositoryJob, queue: String) -> Unit
-typealias MessagePredicate = (job: RepositoryJob) -> Boolean
+typealias MessageHandler<T> = (data: T, queue: String) -> Unit
+/**
+ * Converts the contents of a message to the type given.
+ *
+ * If null is returned, then the JMS message will _not_ be acknowledged.
+ */
+typealias MessageMapper<T> = (message: String) -> T?
 
-class Consumer(brokerUri: String) : ActiveMQConn(brokerUri), AutoCloseable, ExceptionListener {
+open class Consumer(brokerUri: String) : ActiveMQConn(brokerUri), AutoCloseable, ExceptionListener {
   private val logger = LoggerFactory.getLogger(javaClass)
 
-  private val consumers = mutableMapOf<String, Listener>()
+  private val consumers = mutableMapOf<String, Listener<*>>()
 
   init {
     connection.exceptionListener = this
   }
 
-  fun receive(queue: String, timeout: Long? = null, msgPredicate: MessagePredicate? = null): RepositoryJob? {
+  fun <T> receive(queue: String, timeout: Long? = null, msgMapper: MessageMapper<T>): T? {
     return createConsumer(queue).use { consumer ->
       val message: Message? = when (timeout) {
         null -> consumer.receive()
         else -> consumer.receive(timeout)
       }
 
-      handleMessage(queue, message, msgPredicate)
+      handleMessage(queue, message, msgMapper)
     }
   }
 
-  fun startListen(queue: String, handler: MessageHandler, msgPredicate: MessagePredicate? = null): Boolean {
-    return if (!consumers.containsKey(queue)) {
-      consumers[queue] = Listener(queue, handler, msgPredicate)
-      true
-    } else {
-      false
+  fun <T> startListen(queue: String, msgMapper: MessageMapper<T>): (handler: MessageHandler<T>) -> Boolean {
+    return { handler ->
+      if (!consumers.containsKey(queue)) {
+        consumers[queue] = Listener(queue, handler, msgMapper)
+        true
+      } else {
+        false
+      }
     }
   }
 
@@ -48,7 +54,7 @@ class Consumer(brokerUri: String) : ActiveMQConn(brokerUri), AutoCloseable, Exce
     return JmsConsumer.create(this, queue)
   }
 
-  private fun handleMessage(queue: String, message: Message?, msgPredicate: MessagePredicate?): RepositoryJob? {
+  private fun <T> handleMessage(queue: String, message: Message?, msgMapper: MessageMapper<T>): T? {
     return when (message) {
       null -> {
         logger.debug("Received null message for {}", queue)
@@ -59,16 +65,16 @@ class Consumer(brokerUri: String) : ActiveMQConn(brokerUri), AutoCloseable, Exce
         null
       }
       else -> {
-        val job = RepositoryJob.parse(message.text)
+        val data = msgMapper(message.text)
 
-        if (msgPredicate == null || msgPredicate(job)) {
+        if (data != null) {
           message.acknowledge()
-          logger.info("Received {} from {} (acknowledged)", job, queue)
-          job
+          logger.info("Received {} from {} (acknowledged)", data, queue)
         } else {
-          logger.info("Received {} from {} (ignored)", job, queue)
-          null
+          logger.info("Received {} from {} (ignored)", message.text, queue)
         }
+
+        data
       }
     }
   }
@@ -86,10 +92,10 @@ class Consumer(brokerUri: String) : ActiveMQConn(brokerUri), AutoCloseable, Exce
     logger.error("JMS exception occurred", exception)
   }
 
-  inner class Listener(
+  inner class Listener<T>(
     private val queue: String,
-    private val handler: MessageHandler,
-    private val msgPredicate: MessagePredicate?
+    private val handler: MessageHandler<T>,
+    private val msgMapper: MessageMapper<T>
   ) : AutoCloseable, MessageListener {
     private var consumer = createConsumer(queue)
 
@@ -99,9 +105,9 @@ class Consumer(brokerUri: String) : ActiveMQConn(brokerUri), AutoCloseable, Exce
     }
 
     override fun onMessage(message: Message?) {
-      val job = handleMessage(queue, message, msgPredicate)
-      if (job != null) {
-        handler(job, queue)
+      val data = handleMessage(queue, message, msgMapper)
+      if (data != null) {
+        handler(data, queue)
       } else {
         // Close the connection to force rejection of the message.
         consumer.close()
@@ -117,7 +123,7 @@ class Consumer(brokerUri: String) : ActiveMQConn(brokerUri), AutoCloseable, Exce
   }
 }
 
-class JmsConsumer(c: MessageConsumer) : MessageConsumer by c, AutoCloseable {
+internal class JmsConsumer(c: MessageConsumer) : MessageConsumer by c, AutoCloseable {
   companion object {
     @JvmStatic
     fun create(conn: ActiveMQConn, queue: String): JmsConsumer {

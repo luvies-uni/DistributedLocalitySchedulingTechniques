@@ -1,39 +1,37 @@
 package job.broker
 
-import job.data.RepositoryJob
-import job.metrics.queues.TimingQueues
 import org.slf4j.LoggerFactory
 import javax.jms.DeliveryMode
 import javax.jms.MessageProducer
 
-class Producer(brokerUri: String) : ActiveMQConn(brokerUri) {
+open class Producer(brokerUri: String) : ActiveMQConn(brokerUri) {
   private val logger = LoggerFactory.getLogger(javaClass)
 
-  fun startTiming(jobQuantity: Int) {
-    val destination = session.createQueue(TimingQueues.start)
+  fun send(queue: String, text: String) {
+    createProducer(queue).use { producer ->
+      producer.deliveryMode = DeliveryMode.NON_PERSISTENT
 
-    JmsProducer(session.createProducer(destination)).use { producer ->
-      val message = session.createTextMessage(jobQuantity.toString())
+      val message = session.createTextMessage(text)
       producer.send(message)
 
-      logger.info("Started timing with {} items", jobQuantity)
+      logger.info("Sent {} to {}", text, queue)
     }
   }
 
-  fun send(queue: String, job: RepositoryJob) {
-    // Create the destination (Topic or Queue)
-    val destination = session.createQueue(queue)
-
-    // Create a MessageProducer from the Session to the Topic or Queue
-    JmsProducer(session.createProducer(destination)).use { producer ->
-      producer.deliveryMode = DeliveryMode.NON_PERSISTENT
-
-      val message = session.createTextMessage(job.stringify())
-      producer.send(message)
-
-      logger.info("Sent {} to {}", job, queue)
-    }
+  internal fun createProducer(queue: String): JmsProducer {
+    return JmsProducer.create(this, queue)
   }
 }
 
-class JmsProducer(p: MessageProducer) : MessageProducer by p, AutoCloseable
+internal class JmsProducer(p: MessageProducer) : MessageProducer by p, AutoCloseable {
+  companion object {
+    @JvmStatic
+    fun create(conn: ActiveMQConn, queue: String): JmsProducer {
+      // Create the destination (Topic or Queue)
+      val destination = conn.session.createQueue(queue)
+
+      // Create a MessageProducer from the Session to the Topic or Queue
+      return JmsProducer(conn.session.createProducer(destination))
+    }
+  }
+}
