@@ -1,9 +1,9 @@
 package job.impl.roundRobin.generator
 
 import job.broker.Producer
-import job.broker.Signal
 import job.broker.shutdownWrapper
 import job.data.Generator
+import job.util.Signal
 import java.lang.Thread.sleep
 
 fun main() {

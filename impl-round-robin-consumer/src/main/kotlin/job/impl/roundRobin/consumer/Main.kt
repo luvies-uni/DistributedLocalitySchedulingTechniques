@@ -1,10 +1,10 @@
 package job.impl.roundRobin.consumer
 
 import job.broker.Consumer
-import job.broker.Signal
 import job.broker.shutdownWrapper
 import job.data.Processor
 import job.data.ProcessorConfig
+import job.util.Signal
 
 fun main() {
   shutdownWrapper { sig ->
