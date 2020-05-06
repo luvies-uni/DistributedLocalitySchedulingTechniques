@@ -12,7 +12,7 @@ fun main() {
   }
 }
 
-fun runGenerator(sig: Signal, brokerUri: String, repoCount: Int, totalJobs: Int, produceDelay: Long) {
+fun runGenerator(sig: Signal, brokerUri: String, repoCount: Int, totalJobs: Int, produceDelay: Long?) {
   JobProducer(brokerUri).use { producer ->
     val generator = Generator(repoCount)
     producer.startTiming(totalJobs)
@@ -22,8 +22,10 @@ fun runGenerator(sig: Signal, brokerUri: String, repoCount: Int, totalJobs: Int,
       producer.sendJob("jobs/generic", generator.nextJob())
       doneJobs++
 
-      // Allow process to close during wait time.
-      sleep(produceDelay)
+      if (produceDelay != null) {
+        // Allow process to close during wait time.
+        sleep(produceDelay)
+      }
     }
   }
 }

@@ -8,15 +8,11 @@ dependencies {
   testImplementation("junit", "junit", "4.12")
 
   implementation(project(":lib-job"))
-  implementation(project(":job-metrics"))
-  implementation(project(":impl-redis-queue-consumer"))
-  implementation(project(":impl-redis-queue-generator"))
-  implementation(project(":impl-round-robin-consumer"))
-  implementation(project(":impl-round-robin-generator"))
+  implementation("redis.clients", "jedis", "3.2.0")
 }
 
 application {
-  mainClassName = "job.internalScheduler.MainKt"
+  mainClassName = "job.impl.redisQueue.generator.MainKt"
 }
 
 tasks {
