@@ -112,3 +112,5 @@ gradle-app.setting
 
 activemq-data/
 scripts/conf/
+.vscode/.ropeproject/
+__pycache__/
