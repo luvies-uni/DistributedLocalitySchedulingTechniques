@@ -2,6 +2,7 @@ package job.impl.roundRobin.consumer
 
 import job.broker.JobConsumer
 import job.broker.shutdownWrapper
+import job.consts.genericJobQueue
 import job.data.Processor
 import job.data.ProcessorConfig
 import job.util.Signal
@@ -20,7 +21,7 @@ fun runConsumer(sig: Signal, processorConfig: ProcessorConfig) {
     Processor(processorConfig).use { processor ->
       val seenJobs = mutableSetOf<String>()
       while (sig.run) {
-        consumer.receiveJob("jobs/generic", 1000) {
+        consumer.receiveJob(genericJobQueue, 1000) {
           !seenJobs.add(it.repository) || processor.isRepositoryCached(it.repository)
         }?.let { processor.process(it) }
       }

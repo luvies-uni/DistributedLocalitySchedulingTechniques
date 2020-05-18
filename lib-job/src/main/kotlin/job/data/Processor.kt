@@ -18,6 +18,8 @@ class Processor(
 
   private val cache = mutableMapOf<String, Long>()
 
+  var cacheDropHandler: ((repo: String) -> Unit)? = null
+
   fun process(job: RepositoryJob) {
     // Handle cache.
     val curTime = currentTimeMillis()
@@ -25,6 +27,7 @@ class Processor(
       repo != job.repository && cached + cacheTime < curTime
     }.forEach { (repo) ->
       cache.remove(repo)
+      cacheDropHandler?.invoke(repo)
       logger.info("Removed repository {} from cache", repo)
     }
 

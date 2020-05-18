@@ -28,18 +28,9 @@ fun runConsumer(sig: Signal, idleTime: Long, redisUri: String, processorConfig: 
         val currentRepos = mutableSetOf<String>()
         // The time that a job was last processed at
         var lastJobTime = 0L
+        val updateJobTime = { lastJobTime = System.currentTimeMillis() }
         // Whether we are currently processing a job
-        var processing = false
-
-        // A function to simplify holding the processing bool
-        val holdProcessing = { fn: () -> Unit ->
-          processing = true
-          try {
-            fn()
-          } finally {
-            processing = false
-          }
-        }
+        val jobProc = ProcessingFlag()
 
         // Main run loop
         val mainLoop = {
@@ -48,37 +39,45 @@ fun runConsumer(sig: Signal, idleTime: Long, redisUri: String, processorConfig: 
           val currentTime = System.currentTimeMillis()
 
           // Handle subscribing to new queues
-          if (!processing && currentTime - lastJobTime > idleTime) {
+          if (!jobProc.processing && currentTime - lastJobTime > idleTime) {
             runLogger.info("Idle time reached, preparing to subscribe to a new queue...")
             val newRepos = repos.except(currentRepos)
 
             if (newRepos.isNotEmpty()) {
               runLogger.info("Loading backlog counts for potential queues...")
               // Load the job counts for every new repo
-              val jobCounts = pool.resource.use {
-                // Pipeline the request to prevent sending multiple synchronous requests
-                it.pipelined().use { p ->
-                  val jc: List<Pair<String, Response<String?>>> = newRepos.map { repo ->
-                    Pair(repo, p.get(repo.toRedisRepoJobCountKey()))
+              val jobCounts = pool.resource
+                .use {
+                  // Pipeline the request to prevent sending multiple synchronous requests
+                  it.pipelined().use { p ->
+                    val jc: List<Pair<String, Response<String?>>> = newRepos.map { repo ->
+                      repo to p.get(repo.toRedisRepoJobCountKey())
+                    }
+                    p.sync()
+                    jc
                   }
-                  p.sync()
-                  jc
                 }
-              }.map { (repo, res) ->
-                Pair(repo, res.get()?.toInt() ?: 0)
-              }
+                .map { (repo, res) ->
+                  repo to (res.get()?.toInt() ?: 0)
+                }
 
               // Choose a new repo to follow weighted based on the number of jobs waiting
-              jobCounts.weightedChoose { it.second }?.let { (repo, backlogSize) ->
+              jobCounts.weightedChoose { it.second.toLong() }?.let { (repo, backlogSize) ->
                 runLogger.info("Chose repository queue {} (backlog: {})", repo, backlogSize)
 
-                consumer.startJobListen(repo.toRepoQueue(), { job, _ ->
-                  holdProcessing {
-                    processor.process(job)
-                    pool.resource.use { it.decr(repo.toRedisRepoJobCountKey()) }
-                    lastJobTime = System.currentTimeMillis()
-                  }
-                }, { !processing })
+                consumer.startJobListen(
+                  repo.toRepoQueue(),
+                  { job, _ ->
+                    jobProc.hold {
+                      processor.process(job)
+                      pool.resource.use { it.decr(repo.toRedisRepoJobCountKey()) }
+                      updateJobTime()
+                    }
+                  },
+                  { !jobProc.processing }
+                )
+
+                updateJobTime()
               }
             }
           }

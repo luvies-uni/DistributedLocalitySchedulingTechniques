@@ -1,8 +1,12 @@
 package job.metrics.queues
 
+import job.consts.metricsQueueBase
+
 class TimingQueues {
   companion object {
-    const val start = "_metrics/timing/start"
-    const val count = "_metrics/timing/count"
+    private const val base = "${metricsQueueBase}/timing"
+    
+    const val start = "${base}/start"
+    const val count = "${base}/count"
   }
 }

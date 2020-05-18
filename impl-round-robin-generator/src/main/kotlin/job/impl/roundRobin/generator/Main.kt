@@ -2,6 +2,7 @@ package job.impl.roundRobin.generator
 
 import job.broker.JobProducer
 import job.broker.shutdownWrapper
+import job.consts.genericJobQueue
 import job.data.Generator
 import job.util.Signal
 import java.lang.Thread.sleep
@@ -19,7 +20,7 @@ fun runGenerator(sig: Signal, brokerUri: String, repoCount: Int, totalJobs: Int,
 
     var doneJobs = 0
     while (sig.run && doneJobs < totalJobs) {
-      producer.sendJob("jobs/generic", generator.nextJob())
+      producer.sendJob(genericJobQueue, generator.nextJob())
       doneJobs++
 
       if (produceDelay != null) {

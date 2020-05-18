@@ -1,6 +1,8 @@
 package job.util
 
-fun <T> Collection<T>.weightedChoose(getWeight: (t: T) -> Int): T? {
+import job.consts.jobQueueBase
+
+fun <T> Collection<T>.weightedChoose(getWeight: (t: T) -> Long): T? {
   var remainingDistance = Math.random() * this.map(getWeight).sum()
 
   for (t in this) {
@@ -14,7 +16,7 @@ fun <T> Collection<T>.weightedChoose(getWeight: (t: T) -> Int): T? {
 }
 
 fun String.toRepoQueue(): String {
-  return "jobs/$this"
+  return "${jobQueueBase}/$this"
 }
 
 fun <T> Set<T>.except(other: Set<T>): Set<T> {
