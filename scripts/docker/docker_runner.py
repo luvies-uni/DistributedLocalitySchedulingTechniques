@@ -59,5 +59,5 @@ class DockerRunner:
         print(self._help_msg)
         print("\tup\tStart the container")
         print("\tdown\tTears down the container")
-        print("\reset\Resets the container")
+        print("\treset\tResets the container")
         print("\ttest\tOutputs whether the container is running (supports exit codes)")

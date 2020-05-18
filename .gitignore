@@ -114,3 +114,5 @@ activemq-data/
 scripts/conf/
 .vscode/.ropeproject/
 __pycache__/
+!broker/**
+.DS_Store
