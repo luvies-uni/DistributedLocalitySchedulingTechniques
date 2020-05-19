@@ -9,12 +9,16 @@ import javax.management.remote.JMXConnector
 import javax.management.remote.JMXConnectorFactory
 import javax.management.remote.JMXServiceURL
 
+fun String.toJmxServiceUri(): String {
+  return "service:jmx:rmi:///jndi/rmi://${this}/jmxrmi"
+}
+
 class BrokerMetadata(brokerJmxHost: String, private val brokerName: String) : AutoCloseable {
   private val jmxc: JMXConnector
   private val conn: MBeanServerConnection
 
   init {
-    val url = JMXServiceURL("service:jmx:rmi:///jndi/rmi://${brokerJmxHost}/jmxrmi")
+    val url = JMXServiceURL(brokerJmxHost.toJmxServiceUri())
 
     jmxc = JMXConnectorFactory.connect(url)
     conn = jmxc.mBeanServerConnection
@@ -23,7 +27,7 @@ class BrokerMetadata(brokerJmxHost: String, private val brokerName: String) : Au
   fun listQueues(): List<QueueInfo> {
     val brokerView = MBeanServerInvocationHandler.newProxyInstance(
       conn,
-      ObjectName("org.apache.activemq:type=Broker,brokerName=${brokerName}"),
+      ObjectName("org.apache.activemq:BrokerName=$brokerName,Type=Broker"),
       BrokerViewMBean::class.java,
       true
     )

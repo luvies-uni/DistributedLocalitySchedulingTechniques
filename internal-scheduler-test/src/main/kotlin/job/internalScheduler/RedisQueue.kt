@@ -6,17 +6,17 @@ import job.internalScheduler.services.RedisService
 
 fun redisQueue() {
   val redisUri = "localhost"
-  val redisService = RedisService()
 
-  redisService.reset()
-  val processTime = testImpl(
-    "redisQueue",
-    { sig, config -> runConsumer(sig, config.idleTime, redisUri, config.processorConfig) },
-    { sig, config ->
-      runGenerator(sig, redisUri, config.brokerUri, config.repoCount, config.totalJobs, config.produceDelay)
-    }
-  )
-  redisService.down()
-
-  println("Redis queue took ${processTime}ms")
+  RedisService().use { redisService ->
+    redisService.reset()
+    
+    val metricsResult = testImpl(
+      "redisQueue",
+      { sig, config -> runConsumer(sig, config.brokerUri, config.idleTime, redisUri, config.processorConfig) },
+      { sig, config ->
+        runGenerator(sig, redisUri, config.brokerUri, config.repoCount, config.totalJobs, config.produceDelay)
+      }
+    )
+    println("Redis queue metrics: $metricsResult")
+  }
 }

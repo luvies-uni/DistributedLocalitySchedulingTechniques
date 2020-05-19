@@ -9,6 +9,8 @@ dependencies {
 
   implementation(project(":lib-job"))
   implementation(project(":job-metrics"))
+  implementation(project(":impl-dedicated-queue-consumer"))
+  implementation(project(":impl-dedicated-queue-generator"))
   implementation(project(":impl-redis-queue-consumer"))
   implementation(project(":impl-redis-queue-generator"))
   implementation(project(":impl-round-robin-consumer"))

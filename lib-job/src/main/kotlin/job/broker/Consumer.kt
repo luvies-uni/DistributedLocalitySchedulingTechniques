@@ -1,5 +1,6 @@
 package job.broker
 
+import job.metrics.MetricsSender
 import org.slf4j.LoggerFactory
 import javax.jms.*
 
@@ -11,7 +12,10 @@ typealias MessageHandler<T> = (data: T, queue: String) -> Unit
  */
 typealias MessageMapper<T> = (message: String) -> T?
 
-open class Consumer(brokerUri: String) : ActiveMQConn(brokerUri), AutoCloseable, ExceptionListener {
+open class Consumer(
+  brokerUri: String,
+  private val metricsSender: MetricsSender?
+) : ActiveMQConn(brokerUri), AutoCloseable, ExceptionListener {
   private val logger = LoggerFactory.getLogger(javaClass)
 
   private val consumers = mutableMapOf<String, Listener<*>>()
@@ -71,6 +75,7 @@ open class Consumer(brokerUri: String) : ActiveMQConn(brokerUri), AutoCloseable,
           message.acknowledge()
           logger.info("Received {} from {} (acknowledged)", data, queue)
         } else {
+          metricsSender?.jobRejection(1)
           logger.info("Received {} from {} (ignored)", message.text, queue)
         }
 

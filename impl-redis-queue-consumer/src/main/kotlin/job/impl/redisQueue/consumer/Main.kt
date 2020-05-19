@@ -4,6 +4,7 @@ import job.broker.JobConsumer
 import job.broker.shutdownWrapper
 import job.data.Processor
 import job.data.ProcessorConfig
+import job.metrics.MetricsSender
 import job.util.*
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.Response
@@ -12,17 +13,25 @@ fun main() {
   shutdownWrapper { sig ->
     runConsumer(
       sig,
+      "tcp://localhost:61616",
       20_000,
       "localhost",
-      ProcessorConfig("tcp://localhost:61616", 5000, 1000, 60000)
+      ProcessorConfig(5000, 1000, 60000)
     )
   }
 }
 
-fun runConsumer(sig: Signal, idleTime: Long, redisUri: String, processorConfig: ProcessorConfig) {
+fun runConsumer(
+  sig: Signal,
+  brokerUri: String,
+  idleTime: Long,
+  redisUri: String,
+  processorConfig: ProcessorConfig
+) {
   // Create required resources
-  JobConsumer(processorConfig.brokerUri).use { consumer ->
-    Processor(processorConfig).use { processor ->
+  MetricsSender(brokerUri).use { metricsSender ->
+    JobConsumer(brokerUri, metricsSender).use { consumer ->
+      val processor = Processor(processorConfig, metricsSender)
       JedisPool(redisUri).use { pool ->
         // Repos that are currently subscribed to
         val currentRepos = mutableSetOf<String>()
@@ -31,6 +40,30 @@ fun runConsumer(sig: Signal, idleTime: Long, redisUri: String, processorConfig: 
         val updateJobTime = { lastJobTime = System.currentTimeMillis() }
         // Whether we are currently processing a job
         val jobProc = ProcessingFlag()
+
+        // Starts listening to a given queue
+        val startListen = { repo: String ->
+          consumer.startJobListen(
+            repo.toRepoQueue(),
+            { job, _ ->
+              jobProc.hold {
+                processor.process(job)
+                pool.resource.use { it.decr(repo.toRedisRepoJobCountKey()) }
+                updateJobTime()
+              }
+            },
+            { !jobProc.processing }
+          )
+
+          currentRepos.add(repo)
+          updateJobTime()
+        }
+
+        // Handles unsubscribing from queues when the cache expires
+        processor.cacheDropHandler = { repo ->
+          consumer.stopListen(repo.toRepoQueue())
+          currentRepos.remove(repo)
+        }
 
         // Main run loop
         val mainLoop = {
@@ -65,19 +98,7 @@ fun runConsumer(sig: Signal, idleTime: Long, redisUri: String, processorConfig: 
               jobCounts.weightedChoose { it.second.toLong() }?.let { (repo, backlogSize) ->
                 runLogger.info("Chose repository queue {} (backlog: {})", repo, backlogSize)
 
-                consumer.startJobListen(
-                  repo.toRepoQueue(),
-                  { job, _ ->
-                    jobProc.hold {
-                      processor.process(job)
-                      pool.resource.use { it.decr(repo.toRedisRepoJobCountKey()) }
-                      updateJobTime()
-                    }
-                  },
-                  { !jobProc.processing }
-                )
-
-                updateJobTime()
+                startListen(repo)
               }
             }
           }

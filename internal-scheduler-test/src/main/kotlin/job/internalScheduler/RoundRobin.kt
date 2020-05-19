@@ -4,13 +4,13 @@ import job.impl.roundRobin.consumer.runConsumer
 import job.impl.roundRobin.generator.runGenerator
 
 fun roundRobin() {
-  val processTime = testImpl(
+  val metricsResult = testImpl(
     "roundRobin",
-    { sig, config -> runConsumer(sig, config.processorConfig) },
+    { sig, config -> runConsumer(sig, config.brokerUri, config.processorConfig) },
     { sig, config ->
       runGenerator(sig, config.brokerUri, config.repoCount, config.totalJobs, config.produceDelay)
     }
   )
 
-  println("Round robin took ${processTime}ms")
+  println("Round robin metrics: $metricsResult")
 }

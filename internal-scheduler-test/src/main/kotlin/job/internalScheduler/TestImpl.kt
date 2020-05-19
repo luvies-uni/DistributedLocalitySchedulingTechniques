@@ -3,6 +3,7 @@ package job.internalScheduler
 import job.broker.shutdownWrapper
 import job.data.ProcessorConfig
 import job.metrics.Collector
+import job.metrics.MetricsResult
 import job.util.Signal
 import kotlin.concurrent.thread
 
@@ -16,19 +17,16 @@ fun testImpl(
   config: TestImplConfig,
   runConsumer: (sig: Signal, config: TestImplConfig) -> Unit,
   runGenerator: (sig: Signal, config: TestImplConfig) -> Unit
-): Long {
-  var processTime = 0L
+): MetricsResult? {
+  var metricsResult: MetricsResult? = null
 
   shutdownWrapper { sig ->
     val metricsThread = thread(name = "Metrics Thread") {
       Collector(config.brokerUri).use {
-        it.startJobTiming()
-        it.waitForJobTiming(sig)
+        it.startCollection()
+        it.waitForJobProcessTimeCollection(sig)
 
-        val totalJobsProcessTime = it.totalJobsProcessTime
-        if (totalJobsProcessTime != null) {
-          processTime = totalJobsProcessTime
-        }
+        metricsResult = it.results
       }
     }
 
@@ -49,7 +47,7 @@ fun testImpl(
     metricsThread.join()
   }
 
-  return processTime
+  return metricsResult
 }
 
 data class TestImplConfig(
@@ -69,7 +67,7 @@ data class TestImplConfig(
   val produceDelay: Long?
 ) {
   val brokerUri = "vm://$brokerName?broker.persistent=false"
-  val processorConfig = ProcessorConfig(brokerUri, downloadTime, processTime, cacheTime)
+  val processorConfig = ProcessorConfig(downloadTime, processTime, cacheTime)
 
   companion object {
     @JvmStatic

@@ -14,7 +14,7 @@ fun main() {
     runGenerator(
       sig, "tcp://localhost:61616",
       "localhost:1099", "localhost",
-      10, 10, 1000
+      10, 10, 10_000
     )
   }
 }
