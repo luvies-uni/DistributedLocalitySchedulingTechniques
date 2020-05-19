@@ -1,7 +1,6 @@
 package job.internalScheduler
 
 import job.broker.shutdownWrapper
-import job.data.ProcessorConfig
 import job.metrics.Collector
 import job.metrics.MetricsResult
 import job.util.Signal
@@ -56,8 +55,6 @@ data class TestImplConfig(
   val consumers: Int,
 
   // Consumer config
-  val downloadTime: Long,
-  val processTime: Long,
   val cacheTime: Long,
   val idleTime: Long,
 
@@ -67,15 +64,12 @@ data class TestImplConfig(
   val produceDelay: Long?
 ) {
   val brokerUri = "vm://$brokerName?broker.persistent=false"
-  val processorConfig = ProcessorConfig(downloadTime, processTime, cacheTime)
 
   companion object {
     @JvmStatic
     fun getDefault(brokerName: String) = TestImplConfig(
       brokerName,
       10,
-      5000,
-      1000,
       60_000,
       10_000,
       10,

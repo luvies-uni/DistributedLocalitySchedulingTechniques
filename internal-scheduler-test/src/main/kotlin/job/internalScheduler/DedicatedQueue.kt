@@ -14,7 +14,7 @@ fun dedicatedQueue() {
     val metricsResult = testImpl(
       testImplConfig,
       { sig, config ->
-        runConsumer(sig, config.brokerUri, config.idleTime, config.processorConfig, brokerJmxHost, brokerName)
+        runConsumer(sig, config.brokerUri, config.idleTime, config.cacheTime, brokerJmxHost, brokerName)
       },
       { sig, config ->
         runGenerator(

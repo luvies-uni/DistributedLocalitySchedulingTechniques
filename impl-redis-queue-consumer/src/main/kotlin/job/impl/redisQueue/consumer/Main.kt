@@ -3,7 +3,6 @@ package job.impl.redisQueue.consumer
 import job.broker.JobConsumer
 import job.broker.shutdownWrapper
 import job.data.Processor
-import job.data.ProcessorConfig
 import job.metrics.MetricsSender
 import job.util.*
 import redis.clients.jedis.JedisPool
@@ -16,7 +15,7 @@ fun main() {
       "tcp://localhost:61616",
       20_000,
       "localhost",
-      ProcessorConfig(5000, 1000, 60000)
+      60_000
     )
   }
 }
@@ -26,12 +25,12 @@ fun runConsumer(
   brokerUri: String,
   idleTime: Long,
   redisUri: String,
-  processorConfig: ProcessorConfig
+  cacheTime: Long
 ) {
   // Create required resources
   MetricsSender(brokerUri).use { metricsSender ->
     JobConsumer(brokerUri, metricsSender).use { consumer ->
-      val processor = Processor(processorConfig, metricsSender)
+      val processor = Processor(cacheTime, metricsSender)
       JedisPool(redisUri).use { pool ->
         // Repos that are currently subscribed to
         val currentRepos = mutableSetOf<String>()
@@ -67,7 +66,7 @@ fun runConsumer(
 
         // Main run loop
         val mainLoop = {
-          runLogger.info("Fetching active repositories...")
+          runLogger.debug("Fetching active repositories...")
           val repos = pool.resource.use { it.smembers(redisRepoListKey) }
           val currentTime = System.currentTimeMillis()
 

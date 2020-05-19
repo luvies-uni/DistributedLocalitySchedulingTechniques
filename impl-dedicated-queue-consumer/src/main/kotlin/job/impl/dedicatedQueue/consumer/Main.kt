@@ -5,7 +5,6 @@ import job.broker.jmx.BrokerMetadata
 import job.broker.shutdownWrapper
 import job.consts.genericJobQueue
 import job.data.Processor
-import job.data.ProcessorConfig
 import job.metrics.MetricsSender
 import job.util.ProcessingFlag
 import job.util.Signal
@@ -18,7 +17,7 @@ fun main() {
       sig,
       "tcp://localhost:61616",
       60_000,
-      ProcessorConfig(5000, 1000, 5 * 60_000),
+      5 * 60_000,
       "localhost:1099",
       "localhost"
     )
@@ -29,13 +28,13 @@ fun runConsumer(
   sig: Signal,
   brokerUri: String,
   idleTime: Long,
-  processorConfig: ProcessorConfig,
+  cacheTime: Long,
   brokerJmxHost: String,
   brokerName: String
 ) {
   MetricsSender(brokerUri).use { metricsSender ->
     JobConsumer(brokerUri, metricsSender).use { consumer ->
-      val processor = Processor(processorConfig, metricsSender)
+      val processor = Processor(cacheTime, metricsSender)
       BrokerMetadata(brokerJmxHost, brokerName).use { metadata ->
         // Queues that are currently subscribed to (excluding the generic queue)
         val currentQueues = mutableSetOf<String>()

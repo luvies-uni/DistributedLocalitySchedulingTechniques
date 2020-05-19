@@ -1,5 +1,7 @@
 package job.internalScheduler
 
+import job.data.useShortTime
+
 val schedulers = mapOf(
   "round-robin" to { roundRobin() },
   "redis-queue" to { redisQueue() },
@@ -7,6 +9,9 @@ val schedulers = mapOf(
 )
 
 fun main(args: Array<String>) {
+  // Setup generator for local testing
+  useShortTime = true
+
   val firstArg = args.firstOrNull()
 
   if (firstArg != null) {

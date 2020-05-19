@@ -5,7 +5,12 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 
 @Serializable
-data class RepositoryJob(val repository: String, val task: String) {
+data class RepositoryJob(
+  val repository: String,
+  val task: String,
+  val downloadTime: Long,
+  val processTime: Long
+) {
   fun stringify(): String {
     return json.stringify(serializer(), this)
   }

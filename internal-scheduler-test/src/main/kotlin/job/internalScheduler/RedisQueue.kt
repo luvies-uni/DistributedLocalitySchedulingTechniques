@@ -9,10 +9,10 @@ fun redisQueue() {
 
   RedisService().use { redisService ->
     redisService.reset()
-    
+
     val metricsResult = testImpl(
       "redisQueue",
-      { sig, config -> runConsumer(sig, config.brokerUri, config.idleTime, redisUri, config.processorConfig) },
+      { sig, config -> runConsumer(sig, config.brokerUri, config.idleTime, redisUri, config.cacheTime) },
       { sig, config ->
         runGenerator(sig, redisUri, config.brokerUri, config.repoCount, config.totalJobs, config.produceDelay)
       }
