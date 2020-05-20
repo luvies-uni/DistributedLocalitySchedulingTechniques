@@ -13,11 +13,18 @@ fun main() {
   shutdownWrapper { sig ->
     runConsumer(
       sig,
-      "tcp://localhost:61616",
-      60_000,
-      5 * 60_000,
-      "localhost:1099",
-      "localhost"
+      // Test Config
+//      "tcp://localhost:61616",
+//      60_000,
+//      5 * 60_000,
+//      "localhost:1099",
+//      "localhost"
+      // Long running config
+      LongConfig.jmxActiveMQUri,
+      LongConfig.idleTime,
+      LongConfig.cacheTime,
+      LongConfig.jmxHostUri,
+      LongConfig.jmxBrokerName
     )
   }
 }

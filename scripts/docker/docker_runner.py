@@ -1,16 +1,7 @@
 import subprocess
 import os
 import sys
-from typing import List
-
-
-def run(args, shell=None, capture_output=False, bail=True):
-    res = subprocess.run(args, shell=shell, capture_output=capture_output)
-    if bail:
-        if res.returncode != 0:
-            sys.exit(res.returncode)
-    else:
-        return res
+from utils import *
 
 
 class DockerRunner:

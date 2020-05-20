@@ -5,6 +5,7 @@ import job.broker.jmx.BrokerMetadata
 import job.broker.shutdownWrapper
 import job.consts.genericJobQueue
 import job.data.Generator
+import job.util.LongConfig
 import job.util.Signal
 import job.util.toRepoQueue
 import java.lang.Thread.sleep
@@ -12,9 +13,21 @@ import java.lang.Thread.sleep
 fun main() {
   shutdownWrapper { sig ->
     runGenerator(
-      sig, "tcp://localhost:61616",
-      "localhost:1099", "localhost",
-      10, 10, 10_000
+      sig,
+      // Test config
+//      "tcp://localhost:61616",
+//      "localhost:1099",
+//      "localhost",
+//      10,
+//      10,
+//      10_000
+      // Long running config
+      LongConfig.jmxActiveMQUri,
+      LongConfig.jmxHostUri,
+      LongConfig.jmxBrokerName,
+      LongConfig.repoCount,
+      LongConfig.totalJobs,
+      LongConfig.produceDelay
     )
   }
 }

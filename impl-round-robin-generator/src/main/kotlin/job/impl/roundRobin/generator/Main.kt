@@ -4,12 +4,25 @@ import job.broker.JobProducer
 import job.broker.shutdownWrapper
 import job.consts.genericJobQueue
 import job.data.Generator
+import job.util.LongConfig
 import job.util.Signal
 import java.lang.Thread.sleep
 
 fun main() {
   shutdownWrapper { sig ->
-    runGenerator(sig, "tcp://localhost:61616", 10, 10, 1000)
+    runGenerator(
+      sig,
+      // Test config
+//      "tcp://localhost:61616",
+//      10,
+//      10,
+//      1000
+      // Long running config
+      LongConfig.dockerActiveMQUri,
+      LongConfig.repoCount,
+      LongConfig.totalJobs,
+      LongConfig.produceDelay
+    )
   }
 }
 

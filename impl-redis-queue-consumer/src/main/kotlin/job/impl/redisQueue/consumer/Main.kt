@@ -12,10 +12,16 @@ fun main() {
   shutdownWrapper { sig ->
     runConsumer(
       sig,
-      "tcp://localhost:61616",
-      20_000,
-      "localhost",
-      60_000
+      // Test config
+//      "tcp://localhost:61616",
+//      20_000,
+//      "localhost",
+//      60_000
+      // Long running config
+      LongConfig.dockerActiveMQUri,
+      LongConfig.idleTime,
+      LongConfig.dockerRedisUri,
+      LongConfig.cacheTime
     )
   }
 }

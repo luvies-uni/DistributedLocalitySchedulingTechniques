@@ -5,14 +5,19 @@ import job.broker.shutdownWrapper
 import job.consts.genericJobQueue
 import job.data.Processor
 import job.metrics.MetricsSender
+import job.util.LongConfig
 import job.util.Signal
 
 fun main() {
   shutdownWrapper { sig ->
     runConsumer(
       sig,
-      "tcp://localhost:61616",
-      60_000
+      // Test config
+//      "tcp://localhost:61616",
+//      60_000
+      // Long running config
+      LongConfig.dockerActiveMQUri,
+      LongConfig.cacheTime
     )
   }
 }

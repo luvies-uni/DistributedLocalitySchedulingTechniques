@@ -3,17 +3,25 @@ package job.impl.redisQueue.generator
 import job.broker.JobProducer
 import job.broker.shutdownWrapper
 import job.data.Generator
-import job.util.Signal
-import job.util.redisRepoListKey
-import job.util.toRedisRepoJobCountKey
-import job.util.toRepoQueue
+import job.util.*
 import redis.clients.jedis.JedisPool
 
 fun main() {
   shutdownWrapper { sig ->
     runGenerator(
-      sig, "localhost", "tcp://localhost:61616",
-      10, 10, 1000
+      sig,
+      // Test config
+//      "localhost",
+//      "tcp://localhost:61616",
+//      10,
+//      10,
+//      1000
+      // Long running config
+      LongConfig.dockerRedisUri,
+      LongConfig.dockerActiveMQUri,
+      LongConfig.repoCount,
+      LongConfig.totalJobs,
+      LongConfig.produceDelay
     )
   }
 }
