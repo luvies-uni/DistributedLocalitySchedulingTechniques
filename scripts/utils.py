@@ -31,6 +31,8 @@ IMPLS = [
     IMPL_KVS_QUEUE
 ]
 
+METRICS_TARGET = "job-metrics"
+
 
 def impl_gen(impl: str) -> str:
     return "{}-generator".format(impl)

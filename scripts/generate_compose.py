@@ -7,9 +7,14 @@ CONSUMER_COUNT = 15
 
 BROKER_NAME = "activemq"
 REDIS_NAME = "redis"
+METRICS_NAME = "metrics"
 
 # Ensure compose dir exists
 run(["mkdir", "-p", COMPOSE_DIR])
+
+
+def broker_uri(host: str) -> str:
+    return "tcp://{}:61616".format(host)
 
 
 def append_dict_list(d, k, v):
@@ -21,6 +26,7 @@ def append_dict_list(d, k, v):
 
 def generate_compose(
     impl: str,
+    metrics_broker_uri: str,
     broker: bool = True,
     redis: bool = False,
     network: Optional[str] = None
@@ -39,8 +45,16 @@ def generate_compose(
         "image": image_tag_gen(impl)
     })
 
+    metrics = add_generics({
+        "image": image_tag(METRICS_TARGET),
+        "environment": {
+            "BROKER_URI": metrics_broker_uri
+        }
+    })
+
     services = {
-        impl_gen(impl): generator
+        impl_gen(impl): generator,
+        METRICS_NAME: metrics
     }
 
     if broker:
@@ -48,12 +62,14 @@ def generate_compose(
             "image": "rmohr/activemq:5.15.9-alpine"
         })
         add_dependent(generator, BROKER_NAME)
+        add_dependent(metrics, BROKER_NAME)
 
     if redis:
         services[REDIS_NAME] = add_generics({
             "image": "redis:6-alpine"
         })
         add_dependent(generator, REDIS_NAME)
+        add_dependent(metrics, REDIS_NAME)
 
     for i in range(CONSUMER_COUNT):
         consumer = add_generics({
@@ -83,6 +99,19 @@ def generate_compose(
 
 
 if __name__ == "__main__":
-    generate_compose(IMPL_ROUND_ROBIN, network="rr-internal")
-    generate_compose(IMPL_DEDICATED_QUEUE, broker=False)
-    generate_compose(IMPL_KVS_QUEUE, redis=True, network="kvs-internal")
+    generate_compose(
+        IMPL_ROUND_ROBIN,
+        broker_uri(BROKER_NAME),
+        network="rr-internal"
+    )
+    generate_compose(
+        IMPL_DEDICATED_QUEUE,
+        broker_uri("192.168.0.200"),
+        broker=False
+    )
+    generate_compose(
+        IMPL_KVS_QUEUE,
+        broker_uri(BROKER_NAME),
+        redis=True,
+        network="kvs-internal"
+    )

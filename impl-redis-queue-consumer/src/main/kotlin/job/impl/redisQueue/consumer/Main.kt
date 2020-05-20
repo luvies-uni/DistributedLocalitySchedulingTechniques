@@ -9,6 +9,7 @@ import redis.clients.jedis.JedisPool
 import redis.clients.jedis.Response
 
 fun main() {
+  LongConfig.consumerWait()
   shutdownWrapper { sig ->
     runConsumer(
       sig,

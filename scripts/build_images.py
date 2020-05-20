@@ -6,7 +6,17 @@ from utils import *
 BUILD_COMPOSE = os.path.join(COMPOSE_DIR, "docker-compose.build.yml")
 
 if __name__ == "__main__":
-    services = {}
+    services = {
+        METRICS_TARGET: {
+            "image": image_tag(METRICS_TARGET),
+            "build": {
+                "context": os.path.join("..", ".."),
+                "args": {
+                    "TARGET": METRICS_TARGET
+                }
+            }
+        }
+    }
 
     for impl in IMPLS:
         for impl_full in [impl_gen(impl), impl_con(impl)]:
@@ -31,5 +41,6 @@ if __name__ == "__main__":
     run([
         "docker-compose",
         "-f", BUILD_COMPOSE,
-        "build"
+        "build",
+        "--parallel"
     ])

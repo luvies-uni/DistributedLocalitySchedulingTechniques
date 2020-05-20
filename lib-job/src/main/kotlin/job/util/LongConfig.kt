@@ -1,5 +1,7 @@
 package job.util
 
+import java.lang.Thread.sleep
+
 class LongConfig {
   companion object {
     const val dockerActiveMQUri = "tcp://activemq:61616"
@@ -14,5 +16,15 @@ class LongConfig {
     const val jmxActiveMQUri = "tcp://$dedicatedServerIp:61616"
     const val jmxHostUri = "$dedicatedServerIp:1099"
     const val jmxBrokerName = "localhost"
+
+    @JvmStatic
+    fun generatorWait() {
+      sleep(18_000)
+    }
+
+    @JvmStatic
+    fun consumerWait() {
+      sleep(14_000)
+    }
   }
 }

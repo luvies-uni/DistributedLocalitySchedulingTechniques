@@ -9,6 +9,7 @@ import job.util.Signal
 import java.lang.Thread.sleep
 
 fun main() {
+  LongConfig.generatorWait()
   shutdownWrapper { sig ->
     runGenerator(
       sig,
@@ -23,6 +24,8 @@ fun main() {
       LongConfig.totalJobs,
       LongConfig.produceDelay
     )
+
+    sig.waitForExit()
   }
 }
 

@@ -9,6 +9,7 @@ import job.util.LongConfig
 import job.util.Signal
 
 fun main() {
+  LongConfig.consumerWait()
   shutdownWrapper { sig ->
     runConsumer(
       sig,

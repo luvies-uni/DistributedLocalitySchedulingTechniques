@@ -10,6 +10,7 @@ import job.metrics.MetricsSender
 import job.util.*
 
 fun main() {
+  LongConfig.consumerWait()
   shutdownWrapper { sig ->
     runConsumer(
       sig,
