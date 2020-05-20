@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import yaml
+
 from utils import *
 
 CONSUMER_COUNT = 15

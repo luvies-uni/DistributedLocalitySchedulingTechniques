@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-from utils import *
 import yaml
+
+from utils import *
 
 BUILD_COMPOSE = os.path.join(COMPOSE_DIR, "docker-compose.build.yml")
 
