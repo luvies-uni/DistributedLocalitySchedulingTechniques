@@ -1,6 +1,5 @@
 .git
 .github
-.gradle
 build/
 */build/
 broker/

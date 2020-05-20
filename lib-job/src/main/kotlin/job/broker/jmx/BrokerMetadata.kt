@@ -27,7 +27,7 @@ class BrokerMetadata(brokerJmxHost: String, private val brokerName: String) : Au
   fun listQueues(): List<QueueInfo> {
     val brokerView = MBeanServerInvocationHandler.newProxyInstance(
       conn,
-      ObjectName("org.apache.activemq:BrokerName=$brokerName,Type=Broker"),
+      ObjectName("org.apache.activemq:brokerName=$brokerName,type=Broker"),
       BrokerViewMBean::class.java,
       true
     )

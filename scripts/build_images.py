@@ -41,6 +41,5 @@ if __name__ == "__main__":
     run([
         "docker-compose",
         "-f", BUILD_COMPOSE,
-        "build",
-        "--parallel"
+        "build"
     ])

@@ -32,9 +32,11 @@ def generate_compose(
     network: Optional[str] = None
 ):
     def add_generics(svc):
-        svc["stop_grace_period"] = "30s"
+        svc["stop_grace_period"] = "15s"
         if network is not None:
             svc["networks"] = [network]
+        else:
+            svc["network_mode"] = "host"
         return svc
 
     def add_dependent(svc, name):
@@ -106,7 +108,7 @@ if __name__ == "__main__":
     )
     generate_compose(
         IMPL_DEDICATED_QUEUE,
-        broker_uri("192.168.0.200"),
+        broker_uri("localhost"),
         broker=False
     )
     generate_compose(
