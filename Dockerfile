@@ -9,7 +9,7 @@ ENV SNAPSHOT=${BUILD_DIR}/${TARGET}-1.0-SNAPSHOT
 ENV TAR=${SNAPSHOT}.tar
 ENV BASE_OUT=/src/out
 
-RUN gradle :${TARGET}:build --no-daemon && \
+RUN gradle :${TARGET}:build --no-daemon --configure-on-demand --parallel && \
   tar x -f ${TAR} -C ${BUILD_DIR} && \
   mv ${SNAPSHOT} ${BASE_OUT}
 
