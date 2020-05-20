@@ -26,6 +26,8 @@ fun runConsumer(sig: Signal, brokerUri: String, cacheTime: Long) {
         consumer.receiveJob(genericJobQueue, 1000) {
           !seenJobs.add(it.repository) || processor.isRepositoryCached(it.repository)
         }?.let { processor.process(it) }
+
+        processor.handleCache()
       }
     }
   }

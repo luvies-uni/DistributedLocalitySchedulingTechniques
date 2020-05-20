@@ -2,8 +2,9 @@ package job.internalScheduler
 
 import job.impl.roundRobin.consumer.runConsumer
 import job.impl.roundRobin.generator.runGenerator
+import job.metrics.MetricsResult
 
-fun roundRobin() {
+fun roundRobin(): MetricsResult? {
   val metricsResult = testImpl(
     "roundRobin",
     { sig, config -> runConsumer(sig, config.brokerUri, config.cacheTime) },
@@ -13,4 +14,6 @@ fun roundRobin() {
   )
 
   println("Round robin metrics: $metricsResult")
+
+  return metricsResult
 }

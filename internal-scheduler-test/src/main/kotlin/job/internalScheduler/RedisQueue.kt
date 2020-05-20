@@ -3,11 +3,12 @@ package job.internalScheduler
 import job.impl.redisQueue.consumer.runConsumer
 import job.impl.redisQueue.generator.runGenerator
 import job.internalScheduler.services.RedisService
+import job.metrics.MetricsResult
 
-fun redisQueue() {
+fun redisQueue(): MetricsResult? {
   val redisUri = "localhost"
 
-  RedisService().use { redisService ->
+  return RedisService().use { redisService ->
     redisService.reset()
 
     val metricsResult = testImpl(
@@ -18,5 +19,7 @@ fun redisQueue() {
       }
     )
     println("Redis queue metrics: $metricsResult")
+
+    metricsResult
   }
 }

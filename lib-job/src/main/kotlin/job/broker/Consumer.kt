@@ -22,6 +22,7 @@ open class Consumer(
 
   init {
     connection.exceptionListener = this
+    connection.prefetchPolicy.queuePrefetch = 1
   }
 
   fun <T> receive(queue: String, timeout: Long? = null, msgMapper: MessageMapper<T>): T? {

@@ -31,7 +31,7 @@ fun testImpl(
 
     println("Started metrics collection thread")
 
-    val consumerThreads = (1..10).map {
+    val consumerThreads = (1..config.consumers).map {
       thread(name = "Consumer Thread $it") {
         runConsumer(sig, config)
       }
@@ -74,7 +74,7 @@ data class TestImplConfig(
       10_000,
       10,
       100,
-      100
+      1000
     )
   }
 }

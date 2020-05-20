@@ -20,6 +20,15 @@ fun main() {
   }
 }
 
+private val jobProcessedRedisScript =
+  """
+    local count = redis.call('decr', KEYS[1])
+    if (count == 0) then
+      redis.call('del', KEYS[1])
+    end
+    return count
+  """.trimIndent()
+
 fun runConsumer(
   sig: Signal,
   brokerUri: String,
@@ -47,7 +56,13 @@ fun runConsumer(
             { job, _ ->
               jobProc.hold {
                 processor.process(job)
-                pool.resource.use { it.decr(repo.toRedisRepoJobCountKey()) }
+                pool.resource.use {
+                  val key = repo.toRedisRepoJobCountKey()
+                  val res = it.eval(jobProcessedRedisScript, 1, key) as Long
+                  if (res == 0L) {
+                    runLogger.info("Dropped {} from redis", key)
+                  }
+                }
                 updateJobTime()
               }
             },
@@ -110,6 +125,9 @@ fun runConsumer(
               consumer.stopListen(repo.toRepoQueue())
             }
           }
+
+          // Handle the repo cache to ensure unsubscribing from queues
+          processor.handleCache()
         }
 
         // Start up consumer

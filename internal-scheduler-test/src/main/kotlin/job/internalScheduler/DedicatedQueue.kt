@@ -3,14 +3,12 @@ package job.internalScheduler
 import job.impl.dedicatedQueue.consumer.runConsumer
 import job.impl.dedicatedQueue.generator.runGenerator
 import job.internalScheduler.services.withExternalActiveMQBroker
+import job.metrics.MetricsResult
 
-fun dedicatedQueue() {
+fun dedicatedQueue(): MetricsResult? {
   val testImplConfig = TestImplConfig
     .getDefault("dedicatedQueue")
-    .copy(
-      produceDelay = 1_000
-    )
-  withExternalActiveMQBroker(testImplConfig.brokerUri, testImplConfig.brokerName) { brokerJmxHost, brokerName ->
+  return withExternalActiveMQBroker(testImplConfig.brokerUri, testImplConfig.brokerName) { brokerJmxHost, brokerName ->
     val metricsResult = testImpl(
       testImplConfig,
       { sig, config ->
@@ -29,5 +27,6 @@ fun dedicatedQueue() {
       }
     )
     println("Dedicated queue metrics: $metricsResult")
+    metricsResult
   }
 }
