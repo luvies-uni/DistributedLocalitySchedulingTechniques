@@ -28,12 +28,12 @@ def generate_compose(
     }
 
     if broker:
-        services["{}-broker".format(impl)] = add_generics({
+        services["activemq"] = add_generics({
             "image": "rmohr/activemq:5.15.9-alpine"
         })
 
     if redis:
-        services["{}-redis".format(impl)] = add_generics({
+        services["redis"] = add_generics({
             "image": "redis:6-alpine"
         })
 
