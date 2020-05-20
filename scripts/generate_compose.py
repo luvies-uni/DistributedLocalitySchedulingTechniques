@@ -5,8 +5,18 @@ from utils import *
 
 CONSUMER_COUNT = 15
 
+BROKER_NAME = "activemq"
+REDIS_NAME = "redis"
+
 # Ensure compose dir exists
 run(["mkdir", "-p", COMPOSE_DIR])
+
+
+def append_dict_list(d, k, v):
+    if k in d:
+        d[k].append(v)
+    else:
+        d[k] = [v]
 
 
 def generate_compose(
@@ -21,26 +31,42 @@ def generate_compose(
             svc["networks"] = [network]
         return svc
 
+    def add_dependent(svc, name):
+        append_dict_list(svc, "depends_on", name)
+        return svc
+
+    generator = add_generics({
+        "image": image_tag_gen(impl)
+    })
+
     services = {
-        impl_gen(impl): add_generics({
-            "image": image_tag_gen(impl)
-        })
+        impl_gen(impl): generator
     }
 
     if broker:
-        services["activemq"] = add_generics({
+        services[BROKER_NAME] = add_generics({
             "image": "rmohr/activemq:5.15.9-alpine"
         })
+        add_dependent(generator, BROKER_NAME)
 
     if redis:
-        services["redis"] = add_generics({
+        services[REDIS_NAME] = add_generics({
             "image": "redis:6-alpine"
         })
+        add_dependent(generator, REDIS_NAME)
 
     for i in range(CONSUMER_COUNT):
-        services[impl_con_n(impl, i)] = add_generics({
+        consumer = add_generics({
             "image": image_tag_con(impl)
         })
+
+        if broker:
+            add_dependent(consumer, BROKER_NAME)
+
+        if redis:
+            add_dependent(consumer, REDIS_NAME)
+
+        services[impl_con_n(impl, i)] = consumer
 
     compose = {
         "version": '3',
